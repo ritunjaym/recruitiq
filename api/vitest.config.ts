@@ -4,6 +4,8 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: true,
+    pool: "forks",
+    testTimeout: 30000,
     setupFiles: ["./tests/setup.ts"],
   },
 });
