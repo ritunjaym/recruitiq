@@ -53,6 +53,62 @@ def test_index_query_returns_sorted_results(client):
 
 # ── Behavior 4: judge score ───────────────────────────────────────────────────
 
+# ── Slice 5: JD index ────────────────────────────────────────────────────────
+
+JD_DOCS = [
+    {"id": "j1", "text": "Senior Python backend engineer Django REST API microservices"},
+    {"id": "j2", "text": "React frontend developer TypeScript Redux Next.js"},
+    {"id": "j3", "text": "DevOps engineer Kubernetes Docker AWS GCP CI/CD pipelines"},
+]
+
+
+def test_jd_index_build(client):
+    res = client.post("/jd-index/build", json={"documents": JD_DOCS})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["status"] == "ok"
+    assert body["count"] == 3
+
+
+def test_jd_index_query(client):
+    client.post("/jd-index/build", json={"documents": JD_DOCS})
+    res = client.post("/jd-index/query", json={
+        "text": "Python developer Django REST experience", "top_k": 2
+    })
+    assert res.status_code == 200
+    results = res.json()["results"]
+    assert len(results) == 2
+    assert results[0]["id"] == "j1"
+    assert results[0]["score"] >= results[1]["score"]
+
+
+# ── Slice 6: error handling ───────────────────────────────────────────────────
+
+def test_query_on_fresh_index_returns_empty(client):
+    """Querying before build returns empty list, not a 500."""
+    from sidecar.main import _index
+    _index.build([])  # force empty index
+    res = client.post("/index/query", json={"text": "anything", "top_k": 5})
+    assert res.status_code == 200
+    assert res.json() == {"results": []}
+
+
+def test_judge_score_empty_jd_returns_422(client):
+    res = client.post("/judge/score", json={"jd_text": "", "candidate_text": "some text"})
+    assert res.status_code == 422
+
+
+def test_index_build_malformed_doc_returns_422(client):
+    res = client.post("/index/build", json={"documents": [{"text": "missing id field"}]})
+    assert res.status_code == 422
+
+
+def test_unknown_route_returns_404_json(client):
+    res = client.get("/nonexistent-route")
+    assert res.status_code == 404
+    assert res.headers["content-type"].startswith("application/json")
+
+
 def test_judge_score_returns_match_score(client):
     mock_score = MatchScore(
         score=0.85,
