@@ -11,9 +11,11 @@ export function buildApp(db: Db, sidecar?: SidecarClient) {
   app.use(cors());
   app.use(express.json());
 
-  app.use("/candidates", candidatesRouter(db));
+  app.use("/candidates", candidatesRouter(db, sidecar));
   app.use("/jds", jdsRouter(db));
   app.use("/match", matchRouter(db, sidecar));
+
+  app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
   return app;
 }

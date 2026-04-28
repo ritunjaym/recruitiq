@@ -6,10 +6,21 @@ export function jdsRouter(db: Db): Router {
 
   router.get("/", (_req, res) => {
     try {
-      const rows = db.prepare("SELECT * FROM job_descriptions").all();
-      res.json(rows);
-    } catch (err) {
+      res.json(db.prepare("SELECT * FROM job_descriptions").all());
+    } catch {
       res.status(500).json({ error: "Failed to fetch job descriptions" });
+    }
+  });
+
+  router.get("/:id", (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+    try {
+      const row = db.prepare("SELECT * FROM job_descriptions WHERE id = ?").get(id);
+      if (!row) { res.status(404).json({ error: "JD not found" }); return; }
+      res.json(row);
+    } catch {
+      res.status(500).json({ error: "Failed to fetch job description" });
     }
   });
 

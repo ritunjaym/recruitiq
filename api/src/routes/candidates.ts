@@ -35,6 +35,25 @@ export function candidatesRouter(db: Db, sidecar?: SidecarClient): Router {
     }
   });
 
+  router.get("/:id", (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+    try {
+      const row = db.prepare("SELECT * FROM candidates WHERE id = ?").get(id) as {
+        id: number; name: string; skills: string; years_exp: number;
+        bio: string; past_roles: string; embedding_id: string | null;
+      } | undefined;
+      if (!row) { res.status(404).json({ error: "Candidate not found" }); return; }
+      res.json({
+        id: row.id, name: row.name,
+        skills: JSON.parse(row.skills) as string[],
+        years_exp: row.years_exp, bio: row.bio,
+        past_roles: JSON.parse(row.past_roles) as string[],
+        embedding_id: row.embedding_id,
+      });
+    } catch { res.status(500).json({ error: "Failed to fetch candidate" }); }
+  });
+
   router.get("/:id/matches", async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) {
