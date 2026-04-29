@@ -18,6 +18,18 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export interface ChatTurn {
+  role: "user" | "assistant";
+  content: string;
+  created_at?: string;
+}
+
+export interface ChatResponse {
+  reply: string;
+  results: MatchResult[];
+  session_id: string;
+}
+
 export const api = {
   getJds: () => get<JobDescription[]>("/jds"),
   getJd: (id: number) => get<JobDescription>(`/jds/${id}`),
@@ -26,4 +38,7 @@ export const api = {
   match: (jd_id: number) => post<MatchResult[]>("/match", { jd_id }),
   getMatchResults: (jd_id: number) => get<MatchResult[]>(`/match/${jd_id}`),
   getCandidateMatches: (id: number) => get<JdMatchResult[]>(`/candidates/${id}/matches`),
+  chat: (session_id: string, message: string) =>
+    post<ChatResponse>("/chat", { session_id, message }),
+  getChatHistory: (session_id: string) => get<ChatTurn[]>(`/chat/${session_id}`),
 };
