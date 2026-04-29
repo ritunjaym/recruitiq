@@ -1,0 +1,36 @@
+services:
+  sidecar:
+    build:
+      context: ./sidecar
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - faiss_data:/data
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "4000:4000"
+    volumes:
+      - api_data:/data
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SIDECAR_URL=http://sidecar:8000
+      - DB_PATH=/data/recruitiq.db
+      - FIXTURE_PATH=/data/fixtures.json
+      - NODE_ENV=production
+      - PORT=4000
+    depends_on:
+      sidecar:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  faiss_data:
+  api_data:

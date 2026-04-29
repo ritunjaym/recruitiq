@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+tests/
+*.index
+*.index.ids
+pytest.ini
+requirements-index.txt
+requirements-judge.txt

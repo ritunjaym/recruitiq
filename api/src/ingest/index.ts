@@ -5,7 +5,7 @@ import type { Db } from "../db/client.js";
 import { buildCandidates, ingestCandidates } from "./candidates.js";
 import { ingestJds, type JdRow } from "./jds.js";
 
-const FIXTURE_PATH = path.resolve("./src/ingest/fixtures.json");
+const FIXTURE_PATH = process.env.FIXTURE_PATH ?? path.resolve("./src/ingest/fixtures.json");
 
 interface Fixtures {
   candidates: Array<{ Category: string; Text: string }>;

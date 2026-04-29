@@ -1,0 +1,9 @@
+faiss-cpu
+sentence-transformers
+numpy
+pydantic-ai[anthropic]
+pydantic>=2.0
+fastapi
+uvicorn[standard]
+httpx
+datasets

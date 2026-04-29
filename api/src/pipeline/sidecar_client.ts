@@ -13,7 +13,9 @@ export interface MatchScoreResult {
 }
 
 export class SidecarClient {
-  constructor(private readonly baseUrl: string = "http://localhost:8000") {}
+  constructor(
+    private readonly baseUrl: string = process.env.SIDECAR_URL ?? "http://localhost:8000"
+  ) {}
 
   async queryIndex(text: string, topK: number): Promise<SidecarQueryResult[]> {
     const res = await fetch(`${this.baseUrl}/index/query`, {
