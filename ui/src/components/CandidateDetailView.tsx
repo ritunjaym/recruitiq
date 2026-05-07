@@ -4,9 +4,10 @@ import { VerdictBadge } from "./VerdictBadge";
 interface Props {
   result: MatchResult;
   onBack: () => void;
+  loading?: boolean;
 }
 
-export function CandidateDetailView({ result, onBack }: Props) {
+export function CandidateDetailView({ result, onBack, loading = false }: Props) {
   const scorePct = Math.round(result.score * 100);
   const confidencePct = Math.round(result.confidence * 100);
 
@@ -15,48 +16,52 @@ export function CandidateDetailView({ result, onBack }: Props) {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <button onClick={onBack} className="text-sm text-gray-500 hover:text-gray-700 mb-2">
+          <button
+            onClick={onBack}
+            className="text-sm text-text-secondary hover:text-brand mb-2 transition-colors"
+          >
             ← Back
           </button>
-          <h2 className="text-2xl font-bold text-gray-900">{result.candidate_name}</h2>
+          <h2 className="text-2xl font-bold text-text-primary">{result.candidate_name}</h2>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <span className="text-4xl font-black text-indigo-600">{scorePct}%</span>
+          <span className="text-4xl font-extrabold text-brand">{scorePct}%</span>
           <VerdictBadge verdict={result.verdict} />
         </div>
       </div>
 
-      {/* Reasoning */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+      {/* Analysis */}
+      <div className="bg-page border border-border-warm rounded-md p-4">
+        <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
           Analysis
+          {loading && <span className="ml-2 text-brand-green normal-case tracking-normal font-normal">Evaluating…</span>}
         </h3>
-        <p className="text-gray-700 leading-relaxed">{result.reasoning}</p>
+        <p className={`text-text-primary text-sm leading-relaxed ${loading ? "opacity-50" : ""}`}>{result.reasoning}</p>
       </div>
 
       {/* Strengths + Gaps */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <h3 className="text-sm font-semibold text-emerald-700 uppercase tracking-wide mb-2">
+          <h3 className="text-xs font-semibold text-brand-green uppercase tracking-wider mb-2">
             Strengths
           </h3>
-          <ul className="flex flex-col gap-1">
+          <ul className="flex flex-col gap-1.5">
             {result.strengths.map((s, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                <span className="text-emerald-500 mt-0.5">✓</span>
+              <li key={i} className="flex items-start gap-2 text-sm text-text-primary">
+                <span className="text-brand-green mt-0.5 shrink-0">✓</span>
                 {s}
               </li>
             ))}
           </ul>
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-red-700 uppercase tracking-wide mb-2">
+          <h3 className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-2">
             Gaps
           </h3>
-          <ul className="flex flex-col gap-1">
+          <ul className="flex flex-col gap-1.5">
             {result.gaps.map((g, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                <span className="text-red-400 mt-0.5">✗</span>
+              <li key={i} className="flex items-start gap-2 text-sm text-text-primary">
+                <span className="text-red-400 mt-0.5 shrink-0">✗</span>
                 {g}
               </li>
             ))}
@@ -64,16 +69,18 @@ export function CandidateDetailView({ result, onBack }: Props) {
         </div>
       </div>
 
-      {/* Confidence */}
+      {/* Confidence bar */}
       <div className="flex items-center gap-3">
-        <span className="text-sm text-gray-500">Judge confidence:</span>
-        <div className="flex-1 bg-gray-200 rounded-full h-2">
+        <span className="text-xs font-medium text-text-secondary whitespace-nowrap">
+          Judge confidence
+        </span>
+        <div className="flex-1 bg-border rounded-full h-1.5">
           <div
-            className="bg-indigo-500 h-2 rounded-full"
+            className="bg-brand h-1.5 rounded-full transition-all"
             style={{ width: `${confidencePct}%` }}
           />
         </div>
-        <span className="text-sm font-medium text-gray-700">{confidencePct}%</span>
+        <span className="text-xs font-semibold text-text-primary">{confidencePct}%</span>
       </div>
     </div>
   );

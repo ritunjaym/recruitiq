@@ -9,7 +9,7 @@ from __future__ import annotations
 from pydantic_ai import Agent
 from pydantic_ai.exceptions import UnexpectedModelBehavior
 
-from sidecar.models import MatchScore
+from models import MatchScore
 
 _SYSTEM_PROMPT = """\
 You are a technical recruiting judge. Given a job description and a candidate
@@ -35,7 +35,7 @@ class JudgeService:
     def __init__(self, model: str = "claude-sonnet-4-6") -> None:
         self._agent: Agent[None, MatchScore] = Agent(
             model=model,
-            result_type=MatchScore,
+            output_type=MatchScore,
             system_prompt=_SYSTEM_PROMPT,
         )
 
@@ -62,7 +62,7 @@ class JudgeService:
         for attempt in range(1, _MAX_RETRIES + 1):
             try:
                 result = await self._agent.run(user_message)
-                return result.data
+                return result.output
             except UnexpectedModelBehavior as exc:
                 last_exc = exc
                 # Continue to next attempt

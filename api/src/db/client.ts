@@ -1,8 +1,11 @@
 import Database from "better-sqlite3";
+import { mkdirSync } from "fs";
+import { dirname } from "path";
 
 export type Db = Database.Database;
 
 export function createDb(path = process.env.DB_PATH ?? "./recruitiq.db"): Db {
+  mkdirSync(dirname(path), { recursive: true });
   const db = new Database(path);
   db.pragma("journal_mode = WAL");
   db.exec(`
@@ -46,6 +49,16 @@ export function createDb(path = process.env.DB_PATH ?? "./recruitiq.db"): Db {
       role TEXT NOT NULL,
       content TEXT NOT NULL,
       created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS prompt_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp TEXT DEFAULT (datetime('now')),
+      candidate_id INTEGER,
+      jd_id INTEGER,
+      score REAL NOT NULL,
+      verdict TEXT NOT NULL,
+      latency_ms INTEGER NOT NULL
     );
   `);
   return db;

@@ -2,14 +2,31 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, field_validator
 
-from sidecar.services.index_service import IndexService, IndexDoc
-from sidecar.services.judge_service import JudgeService
+from services.index_service import IndexService, IndexDoc
+from services.judge_service import JudgeService
 
 app = FastAPI(title="RecruitIQ Sidecar")
+
+_CANDIDATE_INDEX_PATH = "/data/faiss-candidates.index"
+_JD_INDEX_PATH = "/data/faiss-jds.index"
 
 _index = IndexService()      # candidate index (JD → candidates)
 _jd_index = IndexService()  # JD index (candidate → JDs)
 _judge: JudgeService | None = None
+
+
+@app.on_event("startup")
+def _load_persisted_indexes() -> None:
+    try:
+        _index.load(_CANDIDATE_INDEX_PATH)
+        print(f"Loaded candidate index ({_index.size} docs) from disk")
+    except FileNotFoundError:
+        pass
+    try:
+        _jd_index.load(_JD_INDEX_PATH)
+        print(f"Loaded JD index ({_jd_index.size} docs) from disk")
+    except FileNotFoundError:
+        pass
 
 
 def get_judge() -> JudgeService:
@@ -65,6 +82,11 @@ def health():
 def index_build(req: BuildRequest):
     docs = [IndexDoc(id=d.id, text=d.text) for d in req.documents]
     _index.build(docs)
+    try:
+        import os; os.makedirs("/data", exist_ok=True)
+        _index.save(_CANDIDATE_INDEX_PATH)
+    except Exception as e:
+        print(f"Warning: could not persist candidate index: {e}")
     return {"status": "ok", "count": len(docs)}
 
 
@@ -78,6 +100,11 @@ def index_query(req: QueryRequest):
 def jd_index_build(req: BuildRequest):
     docs = [IndexDoc(id=d.id, text=d.text) for d in req.documents]
     _jd_index.build(docs)
+    try:
+        import os; os.makedirs("/data", exist_ok=True)
+        _jd_index.save(_JD_INDEX_PATH)
+    except Exception as e:
+        print(f"Warning: could not persist JD index: {e}")
     return {"status": "ok", "count": len(docs)}
 
 

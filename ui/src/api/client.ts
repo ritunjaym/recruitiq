@@ -41,4 +41,6 @@ export const api = {
   chat: (session_id: string, message: string) =>
     post<ChatResponse>("/chat", { session_id, message }),
   getChatHistory: (session_id: string) => get<ChatTurn[]>(`/chat/${session_id}`),
+  judge: (candidate_id: number, query: string) =>
+    post<import("../types").MatchResult>("/judge", { candidate_id, query }),
 };

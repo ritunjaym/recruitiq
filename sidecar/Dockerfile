@@ -15,4 +15,4 @@ HEALTHCHECK --interval=15s --timeout=10s --start-period=30s --retries=5 \
   CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
 
 # Shell form so $PORT is expanded at runtime (Cloud Run injects PORT)
-CMD uvicorn sidecar.main:app --host 0.0.0.0 --port ${PORT:-8000}
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}

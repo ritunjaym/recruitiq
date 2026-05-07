@@ -28,6 +28,9 @@ ENV PORT=4000
 ENV DB_PATH=/data/recruitiq.db
 ENV FIXTURE_PATH=/data/fixtures.json
 
+RUN mkdir -p /data
+COPY api/src/ingest/fixtures.json /data/fixtures.json
+
 EXPOSE 4000
 
 HEALTHCHECK --interval=15s --timeout=10s --start-period=60s --retries=5 \

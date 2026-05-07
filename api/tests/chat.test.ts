@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, vi } from "vitest";
 import request from "supertest";
 import { FakeListChatModel } from "@langchain/core/utils/testing";
 import { buildApp } from "../src/app.js";
-import { createDb } from "../src/db/client.js";
+import { createDb, type Db } from "../src/db/client.js";
 import { runIngest } from "../src/ingest/index.js";
 import type { SidecarClient } from "../src/pipeline/sidecar_client.js";
 
@@ -27,9 +27,10 @@ function makeFakeLlm(responses: string[] = ["Here are matching Python candidates
 
 describe("POST /chat", () => {
   let app: ReturnType<typeof buildApp>;
+  let db: Db;
 
   beforeAll(async () => {
-    const db = createDb(TEST_DB);
+    db = createDb(TEST_DB);
     await runIngest(db);
     app = buildApp(db, makeMockSidecar(), makeFakeLlm());
   });
@@ -50,7 +51,6 @@ describe("POST /chat", () => {
 
   // Behavior 2: turn written to DB
   it("writes both user and assistant turns to chat_messages", async () => {
-    const db = createDb(TEST_DB);
     const before = (db.prepare("SELECT COUNT(*) as c FROM chat_messages WHERE session_id = ?")
       .get("sess-002") as { c: number }).c;
 
@@ -83,7 +83,6 @@ describe("POST /chat", () => {
   // Behavior 4: memory accumulates
   it("two messages in same session produce 4 rows in history", async () => {
     const fakeLlm = makeFakeLlm(["First response.", "Second response."]);
-    const db = createDb(TEST_DB);
     const localApp = buildApp(db, makeMockSidecar(), fakeLlm);
 
     await request(localApp).post("/chat").send({ session_id: "sess-004", message: "Python devs" });

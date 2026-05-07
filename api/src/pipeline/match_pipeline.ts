@@ -91,8 +91,9 @@ Years of experience: ${candidate.years_exp}
 Bio: ${candidate.bio}
 Past roles: ${candidate.past_roles}`;
 
+          const t0 = Date.now();
           const matchScore = await this.sidecar.judgeScore(jd.description, profile);
-          return this.persistAndReturn(jd.id, candidate, matchScore);
+          return this.persistAndReturn(jd.id, candidate, matchScore, Date.now() - t0);
         })
       )
     );
@@ -102,7 +103,8 @@ Past roles: ${candidate.past_roles}`;
   private persistAndReturn(
     jd_id: number,
     candidate: CandidateRow,
-    score: MatchScoreResult
+    score: MatchScoreResult,
+    latencyMs: number
   ): MatchResult {
     this.db
       .prepare(
@@ -120,6 +122,13 @@ Past roles: ${candidate.past_roles}`;
         score.reasoning,
         score.confidence
       );
+
+    this.db
+      .prepare(
+        `INSERT INTO prompt_logs (candidate_id, jd_id, score, verdict, latency_ms)
+         VALUES (?, ?, ?, ?, ?)`
+      )
+      .run(candidate.id, jd_id, score.score, score.verdict, latencyMs);
 
     return {
       candidate_id: candidate.id,

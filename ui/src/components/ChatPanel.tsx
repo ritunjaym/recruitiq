@@ -7,17 +7,19 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   results?: MatchResult[];
+  query?: string; // the user query that produced these results
 }
 
 interface Props {
   sessionId: string;
-  // Injectable for tests — defaults to real API
+  onCandidateSelect?: (result: MatchResult, query: string) => void;
   chatFn?: (sessionId: string, message: string) => Promise<ChatResponse>;
   historyFn?: (sessionId: string) => Promise<ChatTurn[]>;
 }
 
 export function ChatPanel({
   sessionId,
+  onCandidateSelect,
   chatFn = api.chat,
   historyFn = api.getChatHistory,
 }: Props) {
@@ -46,7 +48,7 @@ export function ChatPanel({
       const response = await chatFn(sessionId, text);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: response.reply, results: response.results },
+        { role: "assistant", content: response.reply, results: response.results, query: text },
       ]);
     } catch {
       setMessages((prev) => [
@@ -60,39 +62,60 @@ export function ChatPanel({
 
   return (
     <div className="flex flex-col h-full">
+      {/* Panel header */}
+      <div className="px-4 py-3 border-b border-border bg-card shrink-0">
+        <h2 className="text-sm font-semibold text-text-primary">Candidate Search</h2>
+        <p className="text-xs text-text-secondary mt-0.5">Ask in plain English — I'll find the best matches</p>
+      </div>
+
+      {/* Message list */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         {messages.length === 0 && (
-          <p className="text-center text-gray-400 text-sm mt-8">
-            Ask me to find candidates — e.g. "Python engineers with 5+ years"
+          <p className="text-center text-text-secondary text-sm mt-8">
+            Ask me to find candidates — e.g. "find candidates who know React with 3+ years"
           </p>
         )}
         {messages.map((msg, i) => (
-          <ChatMessage key={i} role={msg.role} content={msg.content} results={msg.results} />
+          <ChatMessage
+            key={i}
+            role={msg.role}
+            content={msg.content}
+            results={msg.results}
+            query={msg.query}
+            onCandidateSelect={onCandidateSelect}
+          />
         ))}
         {loading && (
           <div className="flex items-start">
-            <div className="bg-gray-100 rounded-2xl rounded-bl-sm px-4 py-2 text-sm text-gray-400">
+            <div className="bg-page border border-border-warm rounded-lg rounded-bl-sm px-4 py-2.5 text-sm text-text-secondary">
               Searching…
             </div>
           </div>
         )}
         <div ref={bottomRef} />
       </div>
-      <div className="border-t p-3 flex gap-2 bg-white">
+
+      {/* Input bar */}
+      <div className="border-t border-border px-3 py-3 flex gap-2 bg-card">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleSend(); } }}
-          placeholder="Search candidates…"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              void handleSend();
+            }
+          }}
+          placeholder="find candidates who know React with 3+ years…"
           disabled={loading}
-          className="flex-1 border rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="flex-1 border border-border rounded-lg px-4 py-2 text-sm bg-page text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand disabled:opacity-50"
         />
         <button
           onClick={() => void handleSend()}
           disabled={loading || !input.trim()}
           aria-label="Send"
-          className="bg-indigo-600 text-white rounded-full px-4 py-2 text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+          className="bg-brand text-white rounded-lg px-4 py-2 text-sm font-semibold hover:bg-brand/90 disabled:opacity-40 transition-colors"
         >
           Send
         </button>

@@ -1,3 +1,38 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Be Vietnam Pro", sans-serif;
+
+  --color-brand: #005a5f;
+  --color-brand-green: #039365;
+  --color-accent: #a3f229;
+  --color-page: #fbf8f4;
+  --color-card: #ffffff;
+  --color-text-primary: #2c2322;
+  --color-text-secondary: #6a6a6a;
+  --color-border: #d3d3d3;
+  --color-border-warm: #e0cac5;
+
+  --radius-md: 10px;
+  --radius-lg: 20px;
+}
+
+:root {
+  --bg-page: #fbf8f4;
+  --bg-card: #fff;
+  --text-primary: #2c2322;
+  --text-secondary: #6a6a6a;
+  --brand: #005a5f;
+  --brand-green: #039365;
+  --accent: #a3f229;
+  --border: #d3d3d3;
+  --border-warm: #e0cac5;
+  --radius-md: 10px;
+  --radius-lg: 20px;
+}
+
+body {
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: "Be Vietnam Pro", sans-serif;
+}
