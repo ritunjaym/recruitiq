@@ -10,6 +10,7 @@ import { chatRouter } from "./routes/chat.js";
 import { promptLogsRouter } from "./routes/prompt_logs.js";
 import { judgeRouter } from "./routes/judge.js";
 import { reseedRouter } from "./routes/reseed.js";
+import { evalRouter } from "./routes/eval.js";
 import type { SidecarClient } from "./pipeline/sidecar_client.js";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 
@@ -30,6 +31,7 @@ export function buildApp(db: Db, sidecar?: SidecarClient, llm?: BaseChatModel) {
   if (sidecar) {
     app.use("/api/judge", judgeRouter(db, sidecar));
     app.use("/api/reseed", reseedRouter(db, sidecar));
+    app.use("/api/eval", evalRouter(sidecar));
   }
 
   if (llm && sidecar) {

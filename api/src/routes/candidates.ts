@@ -1,5 +1,6 @@
 import { Router } from "express";
 import type { Db } from "../db/client.js";
+import { CandidateRowSchema, parseRows, parseRow } from "../db/schemas.js";
 import { RecommendPipeline } from "../pipeline/recommend_pipeline.js";
 import type { SidecarClient } from "../pipeline/sidecar_client.js";
 
@@ -9,15 +10,7 @@ export function candidatesRouter(db: Db, sidecar?: SidecarClient): Router {
 
   router.get("/", (_req, res) => {
     try {
-      const rows = db.prepare("SELECT * FROM candidates").all() as Array<{
-        id: number;
-        name: string;
-        skills: string;
-        years_exp: number;
-        bio: string;
-        past_roles: string;
-        embedding_id: string | null;
-      }>;
+      const rows = parseRows(CandidateRowSchema, db.prepare("SELECT * FROM candidates").all(), "GET /candidates");
 
       const candidates = rows.map((r) => ({
         id: r.id,
@@ -39,11 +32,9 @@ export function candidatesRouter(db: Db, sidecar?: SidecarClient): Router {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
     try {
-      const row = db.prepare("SELECT * FROM candidates WHERE id = ?").get(id) as {
-        id: number; name: string; skills: string; years_exp: number;
-        bio: string; past_roles: string; embedding_id: string | null;
-      } | undefined;
-      if (!row) { res.status(404).json({ error: "Candidate not found" }); return; }
+      const rawRow = db.prepare("SELECT * FROM candidates WHERE id = ?").get(id);
+      if (!rawRow) { res.status(404).json({ error: "Candidate not found" }); return; }
+      const row = parseRow(CandidateRowSchema, rawRow, `GET /candidates/${id}`);
       res.json({
         id: row.id, name: row.name,
         skills: JSON.parse(row.skills) as string[],

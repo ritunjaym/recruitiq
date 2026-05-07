@@ -11,6 +11,7 @@ export interface MatchScoreResult {
   reasoning: string;
   confidence: number;
   prompt_version?: string;
+  tool_calls?: string[];
 }
 
 export class SidecarClient {

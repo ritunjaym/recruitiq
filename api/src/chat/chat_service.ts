@@ -2,6 +2,7 @@ import { RunnableWithMessageHistory, RunnableSequence } from "@langchain/core/ru
 import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { InMemoryChatMessageHistory } from "@langchain/core/chat_history";
+import { HumanMessage, AIMessage } from "@langchain/core/messages";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import type { Db } from "../db/client.js";
 import type { SidecarClient } from "../pipeline/sidecar_client.js";
@@ -29,7 +30,8 @@ When the user asks to find candidates, extract the key skills and requirements f
 and use them to search. Always be helpful and conversational.
 If the user refines their search (e.g., "now filter those to senior level"),
 incorporate the context from the conversation.
-Keep replies concise — 1-2 sentences introducing the results.`;
+Keep replies concise — 1-2 sentences introducing the results.
+Do not use markdown code blocks, backticks, or code fences in your replies. Plain text only.`;
 
 export class ChatService {
   private readonly histories = new Map<string, InMemoryChatMessageHistory>();
@@ -62,6 +64,9 @@ export class ChatService {
     sidecar: SidecarClient,
     db: Db
   ): Promise<ChatResponse> {
+    // Rehydrate history from DB if this is a new in-memory session
+    await this.rehydrateHistory(sessionId, db);
+
     const reply = await this.chain.invoke(
       { input: message },
       { configurable: { sessionId } }
@@ -80,6 +85,27 @@ export class ChatService {
     ).run(sessionId, "assistant", reply);
 
     return { reply, results, session_id: sessionId };
+  }
+
+  private async rehydrateHistory(sessionId: string, db: Db): Promise<void> {
+    // Only rehydrate once per session (skip if already in memory)
+    if (this.histories.has(sessionId)) return;
+
+    const rows = db.prepare(
+      "SELECT role, content FROM chat_messages WHERE session_id = ? ORDER BY id ASC"
+    ).all(sessionId) as Array<{ role: string; content: string }>;
+
+    if (rows.length === 0) return;
+
+    const history = new InMemoryChatMessageHistory();
+    for (const row of rows) {
+      if (row.role === "user") {
+        await history.addMessage(new HumanMessage(row.content));
+      } else if (row.role === "assistant") {
+        await history.addMessage(new AIMessage(row.content));
+      }
+    }
+    this.histories.set(sessionId, history);
   }
 
   private getOrCreateHistory(sessionId: string): InMemoryChatMessageHistory {

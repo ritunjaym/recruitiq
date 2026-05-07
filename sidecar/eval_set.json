@@ -1,0 +1,62 @@
+[
+  {
+    "id": "eval-01",
+    "jd_text": "Senior React engineer with 5+ years TypeScript and Redux experience. Must have led frontend teams and worked with GraphQL APIs.",
+    "candidate_text": "Name: Alex Kim\nSkills: React, TypeScript, Redux, GraphQL, Node.js\nYears: 7\nBio: Senior frontend engineer who has led teams of 4-6 developers. Extensive experience with React/Redux architecture and GraphQL API integration.\nPast roles: Senior Frontend Engineer, Frontend Tech Lead",
+    "label": "strong"
+  },
+  {
+    "id": "eval-02",
+    "jd_text": "Senior React engineer with 5+ years TypeScript and Redux experience. Must have led frontend teams and worked with GraphQL APIs.",
+    "candidate_text": "Name: Jordan Lee\nSkills: React, JavaScript, CSS, HTML, Vue.js\nYears: 3\nBio: Frontend developer with solid React skills. No TypeScript or Redux experience, primarily uses Vue for larger projects.\nPast roles: Frontend Developer",
+    "label": "weak"
+  },
+  {
+    "id": "eval-03",
+    "jd_text": "Python backend engineer with Django and PostgreSQL. Must have experience building REST APIs and deployed to AWS.",
+    "candidate_text": "Name: Morgan Chen\nSkills: Python, Django, PostgreSQL, REST APIs, AWS, Docker\nYears: 5\nBio: Backend engineer specializing in Django applications. Built and deployed multiple REST APIs serving 100k+ users on AWS EC2 and RDS.\nPast roles: Python Backend Engineer, Senior Django Developer",
+    "label": "strong"
+  },
+  {
+    "id": "eval-04",
+    "jd_text": "Python backend engineer with Django and PostgreSQL. Must have experience building REST APIs and deployed to AWS.",
+    "candidate_text": "Name: Casey Park\nSkills: JavaScript, Node.js, MongoDB, Express\nYears: 4\nBio: Backend engineer with Node.js and MongoDB. No Python or Django experience.\nPast roles: Node.js Developer",
+    "label": "weak"
+  },
+  {
+    "id": "eval-05",
+    "jd_text": "Machine learning engineer with PyTorch, model training, and MLOps experience. Must have deployed models to production.",
+    "candidate_text": "Name: Riley Zhang\nSkills: Python, PyTorch, TensorFlow, MLflow, AWS SageMaker, Docker\nYears: 4\nBio: ML engineer with experience training and deploying NLP and CV models. Used MLflow for experiment tracking and SageMaker for production deployments.\nPast roles: ML Engineer, Data Scientist",
+    "label": "strong"
+  },
+  {
+    "id": "eval-06",
+    "jd_text": "Machine learning engineer with PyTorch, model training, and MLOps experience. Must have deployed models to production.",
+    "candidate_text": "Name: Avery Johnson\nSkills: Excel, SQL, Tableau, Power BI\nYears: 3\nBio: Data analyst focused on business intelligence and reporting. No machine learning or model deployment experience.\nPast roles: Data Analyst, BI Developer",
+    "label": "weak"
+  },
+  {
+    "id": "eval-07",
+    "jd_text": "DevOps engineer with Kubernetes, Terraform, and CI/CD pipeline experience on GCP or AWS.",
+    "candidate_text": "Name: Sam Torres\nSkills: Kubernetes, Terraform, GCP, Docker, GitHub Actions, Helm\nYears: 6\nBio: DevOps engineer with deep Kubernetes experience including multi-cluster management. Built Terraform modules for GCP infrastructure and automated CI/CD pipelines with GitHub Actions.\nPast roles: DevOps Engineer, Site Reliability Engineer",
+    "label": "strong"
+  },
+  {
+    "id": "eval-08",
+    "jd_text": "DevOps engineer with Kubernetes, Terraform, and CI/CD pipeline experience on GCP or AWS.",
+    "candidate_text": "Name: Quinn Davis\nSkills: Python, Flask, PostgreSQL, REST APIs\nYears: 2\nBio: Backend developer with no DevOps or cloud infrastructure experience.\nPast roles: Software Developer",
+    "label": "weak"
+  },
+  {
+    "id": "eval-09",
+    "jd_text": "Full-stack engineer with TypeScript, React, and Node.js. Experience with SQL databases and REST API design required.",
+    "candidate_text": "Name: Blake Wilson\nSkills: TypeScript, React, Node.js, PostgreSQL, REST APIs, Express\nYears: 4\nBio: Full-stack developer building TypeScript/React frontends backed by Node.js REST APIs with PostgreSQL. Has shipped multiple production applications end-to-end.\nPast roles: Full-Stack Engineer",
+    "label": "strong"
+  },
+  {
+    "id": "eval-10",
+    "jd_text": "Full-stack engineer with TypeScript, React, and Node.js. Experience with SQL databases and REST API design required.",
+    "candidate_text": "Name: Drew Martinez\nSkills: Solidity, Ethereum, Web3.js, Smart Contracts\nYears: 2\nBio: Blockchain developer focused on smart contract development. No traditional web stack experience.\nPast roles: Blockchain Developer",
+    "label": "weak"
+  }
+]

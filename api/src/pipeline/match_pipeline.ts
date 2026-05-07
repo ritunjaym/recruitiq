@@ -1,6 +1,7 @@
 import { RunnableSequence } from "@langchain/core/runnables";
 import pLimit from "p-limit";
 import type { Db } from "../db/client.js";
+import { JdRowSchema, CandidateRowSchema, parseRow, parseRows } from "../db/schemas.js";
 import { SidecarClient, type MatchScoreResult } from "./sidecar_client.js";
 
 const CONCURRENCY_LIMIT = 5;
@@ -20,21 +21,7 @@ interface PipelineInput {
   jd_id: number;
 }
 
-interface JdRow {
-  id: number;
-  title: string;
-  company: string;
-  description: string;
-}
-
-interface CandidateRow {
-  id: number;
-  name: string;
-  skills: string;
-  years_exp: number;
-  bio: string;
-  past_roles: string;
-}
+import type { JdRow, CandidateRow } from "../db/schemas.js";
 
 export class MatchPipeline {
   private readonly chain: RunnableSequence;
@@ -58,22 +45,28 @@ export class MatchPipeline {
   }
 
   private fetchJd(jd_id: number): JdRow {
-    const jd = this.db
-      .prepare("SELECT * FROM job_descriptions WHERE id = ?")
-      .get(jd_id) as JdRow | undefined;
-    if (!jd) throw new Error(`JD not found: ${jd_id}`);
-    return jd;
+    const raw = this.db.prepare("SELECT * FROM job_descriptions WHERE id = ?").get(jd_id);
+    if (!raw) throw new Error(`JD not found: ${jd_id}`);
+    return parseRow(JdRowSchema, raw, `fetchJd(${jd_id})`);
   }
 
+  private readonly FAISS_THRESHOLD = 0.25;
+
   private async retrieveCandidates(jd: JdRow): Promise<{ jd: JdRow; candidates: CandidateRow[] }> {
-    const queryResults = await this.sidecar.queryIndex(jd.description, 10);
+    const queryResults = await this.sidecar.queryIndex(jd.description.slice(0, 500), 10);
     if (queryResults.length === 0) return { jd, candidates: [] };
 
-    const ids = queryResults.map((r) => r.id);
+    // Pre-filter: only pass candidates above FAISS threshold to the LLM reranker
+    const filtered = queryResults.filter((r) => r.score >= this.FAISS_THRESHOLD);
+    if (filtered.length === 0) return { jd, candidates: [] };
+
+    const ids = filtered.map((r) => r.id);
     const placeholders = ids.map(() => "?").join(",");
-    const candidates = this.db
-      .prepare(`SELECT * FROM candidates WHERE id IN (${placeholders})`)
-      .all(...ids) as CandidateRow[];
+    const candidates = parseRows(
+      CandidateRowSchema,
+      this.db.prepare(`SELECT * FROM candidates WHERE id IN (${placeholders})`).all(...ids),
+      "retrieveCandidates"
+    );
 
     return { jd, candidates };
   }

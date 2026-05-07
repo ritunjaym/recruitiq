@@ -71,6 +71,7 @@ def get_judge() -> JudgeService:
     global _judge
     if _judge is None:
         _judge = JudgeService()
+        _judge.set_index(_index)
     return _judge
 
 
@@ -157,3 +158,48 @@ def jd_index_query(req: QueryRequest):
 async def judge_score(req: ScoreRequest):
     match_score = await get_judge().score(req.jd_text, req.candidate_text, req.prompt_version)
     return match_score.model_dump()
+
+
+@app.post("/eval")
+async def run_eval():
+    """Run both prompt versions against the controlled eval set and return side-by-side results."""
+    import json, pathlib, time
+    eval_path = pathlib.Path(__file__).parent / "eval_set.json"
+    pairs = json.loads(eval_path.read_text())
+    judge = get_judge()
+    results = []
+    for pair in pairs:
+        v1_start = time.monotonic()
+        v1 = await judge.score(pair["jd_text"], pair["candidate_text"], "v1-standard")
+        v1_ms = int((time.monotonic() - v1_start) * 1000)
+        v2_start = time.monotonic()
+        v2 = await judge.score(pair["jd_text"], pair["candidate_text"], "v2-strict")
+        v2_ms = int((time.monotonic() - v2_start) * 1000)
+        results.append({
+            "id": pair["id"],
+            "label": pair["label"],
+            "v1_standard": {"score": v1.score, "verdict": v1.verdict, "latency_ms": v1_ms},
+            "v2_strict":   {"score": v2.score, "verdict": v2.verdict, "latency_ms": v2_ms},
+            "score_delta": round(v2.score - v1.score, 3),
+        })
+    avg_v1 = round(sum(r["v1_standard"]["score"] for r in results) / len(results), 3)
+    avg_v2 = round(sum(r["v2_strict"]["score"] for r in results) / len(results), 3)
+    strong_agree = sum(
+        1 for r in results
+        if r["label"] == "strong" and r["v2_strict"]["score"] >= r["v1_standard"]["score"]
+    )
+    weak_penalised = sum(
+        1 for r in results
+        if r["label"] == "weak" and r["v2_strict"]["score"] <= r["v1_standard"]["score"]
+    )
+    return {
+        "summary": {
+            "total_pairs": len(results),
+            "avg_score_v1_standard": avg_v1,
+            "avg_score_v2_strict": avg_v2,
+            "avg_delta": round(avg_v2 - avg_v1, 3),
+            "v2_stronger_on_strong_candidates": f"{strong_agree}/{len([r for r in results if r['label']=='strong'])}",
+            "v2_stricter_on_weak_candidates": f"{weak_penalised}/{len([r for r in results if r['label']=='weak'])}",
+        },
+        "pairs": results,
+    }

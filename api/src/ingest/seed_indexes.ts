@@ -39,7 +39,8 @@ async function seedJdIndex(db: Db, sidecar: SidecarClient): Promise<number> {
 
   const documents = rows.map((r) => ({
     id: String(r.id),
-    text: `Title: ${r.title}\nCompany: ${r.company}\n${r.description}`,
+    // Truncate description to first 500 chars — removes noise, improves cosine scores
+    text: `Title: ${r.title}\nCompany: ${r.company}\n${r.description.slice(0, 500)}`,
   }));
 
   const res = await sidecar.buildIndex("jd", documents);
