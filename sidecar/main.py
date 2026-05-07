@@ -16,17 +16,55 @@ _judge: JudgeService | None = None
 
 
 @app.on_event("startup")
-def _load_persisted_indexes() -> None:
+async def _load_or_rebuild_indexes() -> None:
+    import httpx, os
+
+    # 1. Try loading from persisted disk files
+    loaded_candidates, loaded_jds = False, False
     try:
         _index.load(_CANDIDATE_INDEX_PATH)
         print(f"Loaded candidate index ({_index.size} docs) from disk")
+        loaded_candidates = True
     except FileNotFoundError:
         pass
     try:
         _jd_index.load(_JD_INDEX_PATH)
         print(f"Loaded JD index ({_jd_index.size} docs) from disk")
+        loaded_jds = True
     except FileNotFoundError:
         pass
+
+    # 2. If either index is empty, fetch seed data from API and rebuild
+    if loaded_candidates and loaded_jds:
+        return
+
+    api_url = os.environ.get("API_URL", "").rstrip("/")
+    if not api_url:
+        print("Warning: API_URL not set — skipping auto-rebuild of empty indexes")
+        return
+
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            r = await client.get(f"{api_url}/api/reseed/data")
+            r.raise_for_status()
+            data = r.json()
+
+        if not loaded_candidates and data.get("candidates"):
+            docs = [IndexDoc(id=d["id"], text=d["text"]) for d in data["candidates"]]
+            _index.build(docs)
+            os.makedirs("/data", exist_ok=True)
+            _index.save(_CANDIDATE_INDEX_PATH)
+            print(f"Auto-rebuilt candidate index with {_index.size} docs from API")
+
+        if not loaded_jds and data.get("jds"):
+            docs = [IndexDoc(id=d["id"], text=d["text"]) for d in data["jds"]]
+            _jd_index.build(docs)
+            os.makedirs("/data", exist_ok=True)
+            _jd_index.save(_JD_INDEX_PATH)
+            print(f"Auto-rebuilt JD index with {_jd_index.size} docs from API")
+
+    except Exception as e:
+        print(f"Warning: could not auto-rebuild indexes from API: {e}")
 
 
 def get_judge() -> JudgeService:
@@ -55,6 +93,7 @@ class QueryRequest(BaseModel):
 class ScoreRequest(BaseModel):
     jd_text: str
     candidate_text: str
+    prompt_version: str | None = None
 
     @field_validator("jd_text", "candidate_text")
     @classmethod
@@ -116,5 +155,5 @@ def jd_index_query(req: QueryRequest):
 
 @app.post("/judge/score")
 async def judge_score(req: ScoreRequest):
-    match_score = await get_judge().score(req.jd_text, req.candidate_text)
+    match_score = await get_judge().score(req.jd_text, req.candidate_text, req.prompt_version)
     return match_score.model_dump()

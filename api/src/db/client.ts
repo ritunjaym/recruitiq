@@ -58,7 +58,8 @@ export function createDb(path = process.env.DB_PATH ?? "./recruitiq.db"): Db {
       jd_id INTEGER,
       score REAL NOT NULL,
       verdict TEXT NOT NULL,
-      latency_ms INTEGER NOT NULL
+      latency_ms INTEGER NOT NULL,
+      prompt_version TEXT NOT NULL DEFAULT 'v1-standard'
     );
   `);
   return db;

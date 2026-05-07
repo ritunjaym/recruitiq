@@ -5,6 +5,7 @@ import type { Db } from "../db/client.js";
 import { buildCandidates, ingestCandidates } from "./candidates.js";
 import { ingestJds, type JdRow } from "./jds.js";
 import { SidecarClient } from "../pipeline/sidecar_client.js";
+import { seedIndexes } from "./seed_indexes.js";
 
 const FIXTURE_PATH = process.env.FIXTURE_PATH ?? path.resolve("./src/ingest/fixtures.json");
 
@@ -54,49 +55,6 @@ export async function runIngest(db: Db): Promise<void> {
   const candidates = buildCandidates(fixtures.candidates);
   ingestCandidates(db, candidates);
   ingestJds(db, fixtures.jds);
-  await seedSidecarIndex(db);
-  await seedJdIndex(db);
-}
-
-async function seedSidecarIndex(db: Db): Promise<void> {
   const sidecar = new SidecarClient();
-  const rows = db.prepare(
-    "SELECT id, name, skills, years_exp, bio, past_roles FROM candidates"
-  ).all() as Array<{ id: number; name: string; skills: string; years_exp: number; bio: string; past_roles: string }>;
-
-  if (rows.length === 0) return;
-
-  const documents = rows.map((r) => ({
-    id: String(r.id),
-    text: `Name: ${r.name}\nSkills: ${r.skills}\nYears of experience: ${r.years_exp}\nBio: ${r.bio}\nPast roles: ${r.past_roles}`,
-  }));
-
-  const res = await fetch(`${process.env.SIDECAR_URL ?? "http://localhost:8000"}/index/build`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ documents }),
-  });
-  if (!res.ok) throw new Error(`Sidecar index build failed: ${res.status}`);
-  console.log(`Seeded sidecar index with ${documents.length} candidates`);
-}
-
-async function seedJdIndex(db: Db): Promise<void> {
-  const rows = db.prepare(
-    "SELECT id, title, company, description FROM job_descriptions"
-  ).all() as Array<{ id: number; title: string; company: string; description: string }>;
-
-  if (rows.length === 0) return;
-
-  const documents = rows.map((r) => ({
-    id: String(r.id),
-    text: `Title: ${r.title}\nCompany: ${r.company}\n${r.description}`,
-  }));
-
-  const res = await fetch(`${process.env.SIDECAR_URL ?? "http://localhost:8000"}/jd-index/build`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ documents }),
-  });
-  if (!res.ok) throw new Error(`Sidecar JD index build failed: ${res.status}`);
-  console.log(`Seeded sidecar JD index with ${documents.length} JDs`);
+  await seedIndexes(db, sidecar);
 }

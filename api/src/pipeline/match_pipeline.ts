@@ -125,10 +125,10 @@ Past roles: ${candidate.past_roles}`;
 
     this.db
       .prepare(
-        `INSERT INTO prompt_logs (candidate_id, jd_id, score, verdict, latency_ms)
-         VALUES (?, ?, ?, ?, ?)`
+        `INSERT INTO prompt_logs (candidate_id, jd_id, score, verdict, latency_ms, prompt_version)
+         VALUES (?, ?, ?, ?, ?, ?)`
       )
-      .run(candidate.id, jd_id, score.score, score.verdict, latencyMs);
+      .run(candidate.id, jd_id, score.score, score.verdict, latencyMs, score.prompt_version ?? "v1-standard");
 
     return {
       candidate_id: candidate.id,

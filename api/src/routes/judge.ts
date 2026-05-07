@@ -6,7 +6,7 @@ export function judgeRouter(db: Db, sidecar: SidecarClient): Router {
   const router = Router();
 
   router.post("/", async (req, res) => {
-    const { candidate_id, query } = req.body as { candidate_id?: number; query?: string };
+    const { candidate_id, query, prompt_version } = req.body as { candidate_id?: number; query?: string; prompt_version?: string };
     if (!candidate_id || !query?.trim()) {
       res.status(400).json({ error: "candidate_id and query are required" });
       return;
@@ -30,12 +30,12 @@ Past roles: ${row.past_roles}`;
 
     try {
       const t0 = Date.now();
-      const score = await sidecar.judgeScore(query, profile);
+      const score = await sidecar.judgeScore(query, profile, prompt_version);
       const latencyMs = Date.now() - t0;
 
       db.prepare(
-        `INSERT INTO prompt_logs (candidate_id, jd_id, score, verdict, latency_ms) VALUES (?, NULL, ?, ?, ?)`
-      ).run(row.id, score.score, score.verdict, latencyMs);
+        `INSERT INTO prompt_logs (candidate_id, jd_id, score, verdict, latency_ms, prompt_version) VALUES (?, NULL, ?, ?, ?, ?)`
+      ).run(row.id, score.score, score.verdict, latencyMs, score.prompt_version ?? "v1-standard");
 
       res.json({
         candidate_id: row.id,
@@ -46,6 +46,7 @@ Past roles: ${row.past_roles}`;
         gaps: score.gaps,
         reasoning: score.reasoning,
         confidence: score.confidence,
+        prompt_version: score.prompt_version ?? "v1-standard",
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

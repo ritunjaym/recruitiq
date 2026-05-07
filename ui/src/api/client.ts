@@ -31,7 +31,7 @@ export interface ChatResponse {
 }
 
 export const api = {
-  getJds: () => get<JobDescription[]>("/jds"),
+  getJds: () => get<{ data: JobDescription[]; total: number }>("/jds?limit=100").then((r) => r.data),
   getJd: (id: number) => get<JobDescription>(`/jds/${id}`),
   getCandidates: () => get<Candidate[]>("/candidates"),
   getCandidate: (id: number) => get<Candidate>(`/candidates/${id}`),
