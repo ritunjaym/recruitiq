@@ -183,7 +183,8 @@ Deploy script builds and pushes both Docker images to Artifact Registry, deploys
 
 ## Architecture Decisions
 
-See [ADR.md](./ADR.md) for documented decisions on:
+See [ADR](https://docs.google.com/document/d/10cF1FzHtbRyVuq95xspW-5luZZwr6IiQxjxVFofIFk4/edit?usp=sharing)
+ for documented decisions on:
 - Polyglot architecture rationale (TypeScript + Python)
 - FAISS over managed vector services
 - Two-stage retrieve-then-rerank pipeline
